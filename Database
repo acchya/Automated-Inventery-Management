@@ -1,0 +1,145 @@
+import sqlite3
+import time
+
+
+# Database creation and table setup function
+def create_database():
+    conn = sqlite3.connect('inventory.db')
+    cursor = conn.cursor()
+
+    cursor.execute('''
+    CREATE TABLE IF NOT EXISTS inventory (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        item_name TEXT NOT NULL,
+        quantity INTEGER NOT NULL,
+        last_updated TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    )
+    ''')
+
+    conn.commit()
+    conn.close()
+    print("Database and table created successfully.")
+
+
+# Add an item to the inventory
+def add_item(item_name, quantity):
+    conn = sqlite3.connect('inventory.db')
+    cursor = conn.cursor()
+
+    cursor.execute('''
+    INSERT INTO inventory (item_name, quantity)
+    VALUES (?, ?)
+    ''', (item_name, quantity))
+
+    conn.commit()
+    conn.close()
+    print(f"Item '{item_name}' added with quantity {quantity}.")
+
+
+# Update an item's quantity in the inventory
+def update_item(item_name, quantity):
+    conn = sqlite3.connect('inventory.db')
+    cursor = conn.cursor()
+
+    cursor.execute('''
+    UPDATE inventory
+    SET quantity = ?, last_updated = CURRENT_TIMESTAMP
+    WHERE item_name = ?
+    ''', (quantity, item_name))
+
+    conn.commit()
+    conn.close()
+    print(f"Item '{item_name}' updated to quantity {quantity}.")
+
+
+# Fetch and display all items in the inventory
+def get_inventory():
+    conn = sqlite3.connect('inventory.db')
+    cursor = conn.cursor()
+
+    cursor.execute('SELECT * FROM inventory')
+    rows = cursor.fetchall()
+
+    for row in rows:
+        print(f"ID: {row[0]}, Item: {row[1]}, Quantity: {row[2]}, Last Updated: {row[3]}")
+
+    conn.close()
+
+
+# Delete an item from the inventory by ID
+def delete_item(item_id):
+    conn = sqlite3.connect('inventory.db')
+    cursor = conn.cursor()
+
+    cursor.execute('''
+    DELETE FROM inventory
+    WHERE id = ?
+    ''', (item_id,))
+
+    if cursor.rowcount > 0:
+        print(f"Item with ID '{item_id}' deleted successfully.")
+    else:
+        print(f"No item found with ID '{item_id}'.")
+
+    conn.commit()
+    conn.close()
+
+
+# Simulating input (e.g., barcode scanner or manual input)
+def capture_barcode():
+    item_name = input("Scan Barcode or Enter Item Name: ")  # Barcode or item name manually entered
+    quantity = int(input("Enter Quantity: "))
+    add_item(item_name, quantity)
+
+
+# Simulate weight sensor (this part can be extended with actual hardware)
+def simulate_weight_sensor():
+    item_name = input("Enter Item Name: ")
+    weight = float(input("Enter Weight (grams): "))  # Use weight as a proxy for quantity
+    quantity = int(weight // 100)  # Assuming 100 grams per unit item
+    add_item(item_name, quantity)
+
+
+# Main function to interact with the user
+def main():
+    create_database()  # Ensure database and table are created at the beginning
+
+    while True:
+        print("\nMenu:")
+        print("1. Capture Barcode (Add Item)")
+        print("2. Simulate Weight Sensor (Add Item)")
+        print("3. Update Item Quantity")
+        print("4. Show Inventory")
+        print("5. Delete Item by ID")
+        print("6. Exit")
+
+        choice = input("Enter choice (1-6): ")
+
+        if choice == '1':
+            capture_barcode()  # Add item via barcode input
+        elif choice == '2':
+            simulate_weight_sensor()  # Add item via weight sensor input
+        elif choice == '3':
+            item_name = input("Enter Item Name to Update: ")
+            new_quantity = int(input("Enter New Quantity: "))
+            update_item(item_name, new_quantity)  # Update existing item
+        elif choice == '4':
+            get_inventory()  # Display all items
+        elif choice == '5':
+            try:
+                item_id = int(input("Enter Item ID to Delete: "))
+                delete_item(item_id)  # Delete item from inventory by ID
+            except ValueError:
+                print("Invalid ID. Please enter a numeric value.")
+        elif choice == '6':
+            print("Exiting...")
+            break
+        else:
+            print("Invalid choice. Please try again.")
+
+        time.sleep(2)  # Wait for 2 seconds before showing the menu again
+
+
+# Run the main function
+if __name__ == "__main__":
+    main()
